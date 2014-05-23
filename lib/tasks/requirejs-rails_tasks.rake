@@ -35,8 +35,10 @@ namespace :requirejs do
   requirejs = ActiveSupport::OrderedOptions.new
 
   task :clean => ["requirejs:setup"] do
+		puts 'Cleaning...'
     FileUtils.remove_entry_secure(requirejs.config.source_dir, true)
     FileUtils.remove_entry_secure(requirejs.driver_path, true)
+		puts 'Done'
   end
 
   task :setup => ["assets:environment"] do
@@ -49,6 +51,7 @@ namespace :requirejs do
     # sprockets hooks get executed
     _ = ActionView::Base
 
+		puts 'Setting up...'
     requirejs.env = Rails.application.assets
 
     # Preserve the original asset paths, as we'll be manipulating them later
@@ -56,6 +59,7 @@ namespace :requirejs do
     requirejs.config = Rails.application.config.requirejs
     requirejs.builder = Requirejs::Rails::Builder.new(requirejs.config)
     requirejs.manifest = {}
+		puts 'Setup Complete'
   end
 
   task :test_node do
@@ -89,6 +93,7 @@ OS X Homebrew users can use 'brew install node'.
     # copy all assets to tmp/assets
     task :prepare_source => ["requirejs:setup",
                              "requirejs:clean"] do
+			puts 'Preparing the source...'
       requirejs.config.source_dir.mkpath
       requirejs.env.each_logical_path do |logical_path|
         next unless requirejs.config.asset_allowed?(logical_path)
@@ -98,27 +103,34 @@ OS X Homebrew users can use 'brew install node'.
           asset.write_to(filename)
         end
       end
+			puts 'Source prepared'
     end
 
     task :generate_rjs_driver => ["requirejs:setup"] do
+			puts 'Generating the rjs driver...'
       requirejs.builder.generate_rjs_driver
+			puts 'Driver generated'
     end
 
     task :run_rjs => ["requirejs:setup",
                       "requirejs:test_node"] do
+			puts 'Running rjs'
       requirejs.config.target_dir.mkpath
 
       result = `node "#{requirejs.config.driver_path}"`
       unless $?.success?
         raise RuntimeError, "Asset compilation with node failed with error:\n\n#{result}\n"
       end
+			puts 'rjs done'
     end
 
     # Copy each built asset, identified by a named module in the
     # build config, to its Sprockets digestified name.
     task :digestify_and_compress => ["requirejs:setup"] do
+			puts 'Digestify and compress...'
       requirejs.config.build_config['modules'].each do |m|
         asset_name = "#{requirejs.config.module_name_for(m)}.js"
+				puts "Module #{asset_name}"
         built_asset_path = requirejs.config.target_dir + asset_name
         digest_name = asset_name.sub(/\.(\w+)$/) { |ext| "-#{requirejs.builder.digest_for(built_asset_path)}#{ext}" }
         digest_asset_path = requirejs.config.target_dir + digest_name
@@ -138,6 +150,7 @@ OS X Homebrew users can use 'brew install node'.
         end
       end
     end
+		puts 'Digestified'
   end
 
   desc "Precompile RequireJS-managed assets"
