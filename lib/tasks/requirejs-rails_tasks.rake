@@ -121,7 +121,7 @@ OS X Homebrew users can use 'brew install node'.
       unless $?.success?
         raise RuntimeError, "Asset compilation with node failed with error:\n\n#{result}\n"
       end
-			puts 'rjs done, #{result}'
+			puts "rjs done, #{result}"
     end
 
     # Copy each built asset, identified by a named module in the
